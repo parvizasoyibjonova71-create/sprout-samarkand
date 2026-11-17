@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprout Samarkand</title>
+<style>
+:root{--forest:#123d2a;--leaf:#4caf50;--sprout:#9bdc6a;--soil:#6b4a33;--water:#2f9fc4;--sun:#f2c230;--sky:#e7f5ee;--ink:#14261c}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 "Avenir Next","Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--sky)}
+.hero{background:linear-gradient(#cdeaf5 0%,#e7f5ee 75%);padding:20px 16px 0;text-align:center;position:relative;overflow:hidden}
+.hero h1{font:700 32px Georgia,serif;color:var(--forest);margin:0}
+.hero p.sub{margin:4px auto 0;max-width:420px;color:#2c4a3a}
+.sun{position:absolute;top:14px;right:18px;width:46px;height:46px;border-radius:50%;background:var(--sun);box-shadow:0 0 0 10px rgba(242,194,48,.25)}
+svg#plant{width:min(300px,80vw);height:auto;display:block;margin:6px auto 0}
+.stem{transform-origin:150px 232px;transition:transform .8s cubic-bezier(.3,1.3,.5,1)}
+.leaf,.bloom{transform-box:fill-box;transform-origin:center;transition:transform .5s cubic-bezier(.3,1.6,.5,1),opacity .3s}
+.leaf.off,.bloom.off{transform:scale(0);opacity:0}
+.ground{background:var(--soil);color:#f6e9d9;padding:14px 16px;margin:-2px 0 0;text-align:center}
+.ground b{font:700 18px Georgia,serif;color:#fff}
+.meter{height:10px;background:rgba(255,255,255,.2);border-radius:99px;max-width:320px;margin:8px auto 0;overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--sprout);transition:width .8s}
+main{max-width:680px;margin:0 auto;padding:16px}
+nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+nav button{padding:12px 2px;border:2px solid var(--forest);background:#fff;color:var(--forest);font:700 13px inherit;border-radius:999px;cursor:pointer}
+nav button[aria-selected=true]{background:var(--forest);color:#fff}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+section{display:none}section.on{display:block}
+.panel{background:#fff;border-radius:20px 20px 20px 4px;padding:18px;margin-bottom:14px;box-shadow:0 2px 0 #c9e4d4}
+h2{font:700 21px Georgia,serif;color:var(--forest);margin:0 0 6px}
+label{display:block;font-weight:600;margin:12px 0 4px}
+input,select{width:100%;padding:11px;font-size:16px;border:2px solid #b7d8c3;border-radius:12px;background:#fff}
+.go{width:100%;margin-top:14px;padding:13px;border:0;border-radius:12px;background:var(--leaf);color:#fff;font:700 16px inherit;cursor:pointer}
+.go.water{background:var(--water)}
+.stats{display:flex;gap:10px}
+.stat{flex:1;background:#eef8f1;border-radius:14px;padding:10px 12px}
+.stat b{display:block;font:700 26px Georgia,serif;color:var(--forest)}
+.small{font-size:13px;color:#4d6557}
+ul{list-style:none;padding:0;margin:8px 0 0}
+li{padding:10px 0;border-top:1px dashed #b7d8c3}
+.tag{font-size:12px;padding:2px 9px;border-radius:99px;background:#fff1c9;color:#6b4c0b;margin-left:6px}
+.habit{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:1px dashed #b7d8c3;cursor:pointer}
+.habit input{width:24px;height:24px;accent-color:var(--water)}
+.habit span{flex:1}
+.drops{color:var(--water);font-weight:700}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="sun" aria-hidden="true"></div>
+  <h1>Sprout Samarkand</h1>
+  <p class="sub">Recycle a kilo. Save a litre. Watch your garden grow.</p>
+
+  <svg id="plant" viewBox="0 0 300 250" role="img" aria-label="Your plant">
+    <ellipse cx="150" cy="238" rx="86" ry="12" fill="#6b4a33"/>
+    <rect id="stem" class="stem" x="146" y="82" width="8" height="150" rx="4" fill="#2f7d3b" style="transform:scaleY(.05)"/>
+    <g id="leaves"></g>
+    <g id="bloom" class="bloom off">
+      <g transform="translate(150 70)">
+        <circle r="8" fill="#f2c230"/>
+        <g fill="#f08aa8">
+          <ellipse cx="0" cy="-17" rx="8" ry="11"/><ellipse cx="0" cy="17" rx="8" ry="11"/>
+          <ellipse cx="-17" cy="0" rx="11" ry="8"/><ellipse cx="17" cy="0" rx="11" ry="8"/>
+        </g>
+        <circle r="8" fill="#f2c230"/>
+      </g>
+    </g>
+    <ellipse cx="150" cy="232" rx="9" ry="5" fill="#3a2a1d" id="seed"/>
+  </svg>
+  <div class="ground">
+    <b id="stage">Seed</b><br><span id="msg" class="small" style="color:#e9d7c1"></span>
+    <div class="meter"><i id="meter"></i></div>
+    <button id="share" style="margin-top:12px;padding:9px 18px;border:2px solid #f6e9d9;background:transparent;color:#fff;border-radius:99px;font:700 14px inherit;cursor:pointer">Copy my garden to share</button>
+  </div>
+</div>
+
+<main>
+<nav role="tablist">
+  <button role="tab" aria-selected="true" data-tab="waste">Waste</button>
+  <button role="tab" aria-selected="false" data-tab="water">Water</button>
+  <button role="tab" aria-selected="false" data-tab="clean">Cleanup</button>
+  <button role="tab" aria-selected="false" data-tab="map">Places</button>
+</nav>
+
+<section id="waste" class="on">
+  <div class="panel">
+    <h2>Log what you recycled</h2>
+    <label for="mat">Material</label><select id="mat"></select>
+    <label for="kg">Weight (kg)</label>
+    <input id="kg" type="number" min="0" step="0.1" inputmode="decimal" placeholder="e.g. 2.5">
+    <button class="go" id="addWaste">Plant it</button>
+  </div>
+  <div class="panel">
+    <h2>Your impact</h2>
+    <div class="stats">
+      <div class="stat"><b id="wKg">0</b>kg recycled</div>
+      <div class="stat"><b id="wCo2">0</b>kg CO₂ avoided</div>
+    </div>
+    <ul id="wLog"></ul>
+    <p class="small">Factors are approximate (CO₂ avoided per kg recycled instead of made from raw material). Verify against EPA WARM or WRAP before publishing.</p>
+  </div>
+</section>
+
+<section id="water">
+  <div class="panel">
+    <h2>This week's water habits</h2>
+    <p class="small" style="margin:0">Tick what you did. Every litre feeds your plant.</p>
+    <div id="habits"></div>
+    <p><span class="drops"><span id="litres">0</span> litres saved</span> ≈ <b id="buckets">0</b> buckets of 10 L</p>
+    <button class="go water" id="reset">Start a new week</button>
+    <p class="small">Estimates are approximate. Samarkand lies in a water-scarce region, so small savings matter. Add local data and sources.</p>
+  </div>
+</section>
+
+<section id="clean">
+  <div class="panel">
+    <h2>Log a neighbourhood cleanup</h2>
+    <label for="ckg">Litter collected (kg)</label>
+    <input id="ckg" type="number" min="0" step="0.5" inputmode="decimal" placeholder="weigh it or estimate">
+    <label for="cppl">Volunteers</label>
+    <input id="cppl" type="number" min="1" step="1" inputmode="numeric" placeholder="e.g. 12">
+    <label for="chrs">Hours per person</label>
+    <input id="chrs" type="number" min="0" step="0.5" inputmode="decimal" placeholder="e.g. 2">
+    <button class="go" id="addClean">Plant it</button>
+  </div>
+  <div class="panel">
+    <h2>Community impact</h2>
+    <div class="stats">
+      <div class="stat"><b id="cKg">0</b>kg litter removed</div>
+      <div class="stat"><b id="cHrs">0</b>volunteer hours</div>
+    </div>
+    <ul id="cLog"></ul>
+    <p class="small">Cleanups grow the garden too. We count litter removed and volunteer time, and make no CO₂ claim for it.</p>
+  </div>
+</section>
+
+<section id="map">
+  <div class="panel">
+    <h2>Recycling and repair in Samarkand</h2>
+    <label for="filter">Show</label>
+    <select id="filter"><option value="all">Everything</option></select>
+    <ul id="places"></ul>
+  </div>
+</section>
+</main>
+
+<script>
+/* ===== YOUR DATA: edit only this block ===== */
+// factor = kg CO2 avoided per kg recycled (approximate, verify sources)
+const MATERIALS = [
+  {id:'paper',  name:'Paper & cardboard', factor:1.0},
+  {id:'plastic',name:'Plastic (PET)',     factor:1.5},
+  {id:'glass',  name:'Glass',             factor:0.3},
+  {id:'alu',    name:'Aluminium',         factor:9.0},
+  {id:'steel',  name:'Metal cans (steel)',factor:1.5}
+];
+// litres = estimated litres saved by the habit (verify)
+const HABITS = [
+  {id:'h1', name:'Turned off the tap while brushing teeth (7 days)', litres:40},
+  {id:'h2', name:'Showers 3 minutes shorter (5 times)',              litres:130},
+  {id:'h3', name:'Ran the washing machine only with full loads',     litres:40},
+  {id:'h4', name:'Fixed a dripping tap',                              litres:100},
+  {id:'h5', name:'Watered plants in the evening, not midday',         litres:30}
+];
+// Source for all: Google Maps listings, no visit or call yet. Set verified:true after you call or visit.
+const PLACES = [
+  {name:'Recycling point (paper, plastic)', type:'Recycling', address:'Plus code MWM7+W6', q:'MWM7+W6 Samarkand', info:'Hours not listed. Call or visit to confirm.', verified:false},
+  {name:'Scrap metal collection', type:'Recycling', address:'Plus code MWMC+W9', q:'MWMC+W9 Samarkand', info:'Ferrous and non-ferrous metal. Hours not listed.', verified:false},
+  {name:'Samarkand Plast Polymer', type:'Recycling', address:'Plus code HXH8+7P6', q:'HXH8+7P6 Samarkand', info:'Plastic and polymer waste. Listed as open 24 hours.', verified:false},
+  {name:'Samarqand stroy metal produkt', type:'Recycling', address:'Rudaki St 145', info:'Metal products yard. Mon-Sat 08:00-20:00. +998 97 915-79-71. Ask if they buy scrap.', verified:false},
+  {name:'Shoe repair workshop', type:'Shoe repair', address:'Plus code MWCQ+H58', q:'MWCQ+H58 Samarkand', info:'Shoes, leather bags, belts, small clothing repairs. Daily 08:00-18:00. +998 90 191-28-01', verified:false},
+  {name:"Poyavzal ta'mirlash ustaxonasi", type:'Shoe repair', address:"Tarannum St 63", info:'Shoe repair and restoration. Daily 08:00-20:00. +998 91 552-62-14', verified:false},
+  {name:'SneakNFresh Samarkand', type:'Shoe repair', address:'Buyuk Ipak Yuli St 72', info:'Sneaker cleaning and restoration. Daily 11:00-20:00. +998 70 024-34-54', verified:false},
+  {name:'Mobile-Service', type:'Electronics repair', address:'Pochtovaya St 15', info:'Phones, tablets, laptops, monitors. Daily 09:00-20:00. +998 95 511-11-15', verified:false},
+  {name:'Zender', type:'Electronics repair', address:'Gagarin St', info:'Laptops, desktops, office equipment. Mon-Sat 09:00-18:30, Sun 09:00-17:30. +998 55 701-78-78', verified:false},
+  {name:'E-Max', type:'Electronics repair', address:'Beruniy St', info:'Computers, printers, cartridge refills. Mon-Sat 09:00-19:00, Sun 10:00-15:00. +998 90 656-22-63', verified:false}
+];
+/* ===== end of data block ===== */
+
+const $ = s => document.querySelector(s);
+const store = {
+  get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===b.dataset.tab));
+});
+
+/* plant: leaves alternate left/right up the stem */
+const LEAVES=8, NS='http://www.w3.org/2000/svg';
+for(let i=0;i<LEAVES;i++){
+  const side=i%2?1:-1, y=214-i*17, e=document.createElementNS(NS,'ellipse');
+  e.setAttribute('cx',150+side*20);e.setAttribute('cy',y);e.setAttribute('rx',19);e.setAttribute('ry',8);
+  e.setAttribute('transform',`rotate(${side*-25} ${150+side*20} ${y})`);
+  e.setAttribute('fill',i%3===0?'#7cc24f':'#3f9d4a');e.setAttribute('class','leaf off');
+  $('#leaves').appendChild(e);
+}
+const STAGES=[
+  [0,'Seed','Your garden is waiting. Log your first kilo or litre.'],
+  [5,'Sprout','A first green shoot. Keep going.'],
+  [20,'Seedling','Leaves are opening up.'],
+  [45,'Young plant','Strong and tall. Your habits are working.'],
+  [75,'In bloom','A flower for Samarkand. Share your garden!']
+];
+function growPlant(g){
+  g=Math.min(100,g);
+  const st=STAGES.filter(s=>g>=s[0]).pop();
+  $('#stage').textContent=st[1];$('#msg').textContent=st[2];
+  $('#meter').style.width=g+'%';
+  const scale=g<1?0.05:Math.min(1,0.15+g/90);
+  $('#stem').style.transform=`scaleY(${scale})`;
+  $('#seed').style.opacity=g>=1?0:1;
+  const stemH=150*scale;
+  document.querySelectorAll('.leaf').forEach((l,i)=>l.classList.toggle('off',!(g>=i*10+4&&stemH>i*17+14)));
+  $('#bloom').classList.toggle('off',g<75);
+}
+
+/* waste */
+$('#mat').innerHTML=MATERIALS.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+let log=store.get('waste',[]);
+function totals(){
+  let kg=0,co2=0;
+  log.forEach(e=>{const m=MATERIALS.find(x=>x.id===e.id);kg+=e.kg;co2+=e.kg*m.factor});
+  return {kg,co2};
+}
+function renderWaste(){
+  const t=totals();
+  $('#wKg').textContent=t.kg.toFixed(1);$('#wCo2').textContent=t.co2.toFixed(1);
+  $('#wLog').innerHTML=log.slice(-5).reverse().map(e=>{
+    const m=MATERIALS.find(x=>x.id===e.id);
+    return `<li>${m.name}: ${e.kg} kg <span class="small">(−${(e.kg*m.factor).toFixed(1)} kg CO₂)</span></li>`}).join('');
+}
+$('#addWaste').onclick=()=>{
+  const kg=parseFloat($('#kg').value);
+  if(!(kg>0)){$('#kg').focus();return}
+  log.push({id:$('#mat').value,kg});store.set('waste',log);$('#kg').value='';refresh();
+};
+
+/* water */
+let done=store.get('habits',[]);
+$('#habits').innerHTML=HABITS.map(h=>`<label class="habit"><input type="checkbox" id="${h.id}"><span>${h.name}</span><b>${h.litres} L</b></label>`).join('');
+HABITS.forEach(h=>{const c=document.getElementById(h.id);c.checked=done.includes(h.id);
+  c.onchange=()=>{done=HABITS.filter(x=>document.getElementById(x.id).checked).map(x=>x.id);store.set('habits',done);refresh()}});
+const litres=()=>HABITS.filter(h=>done.includes(h.id)).reduce((s,h)=>s+h.litres,0);
+$('#reset').onclick=()=>{done=[];store.set('habits',done);HABITS.forEach(h=>document.getElementById(h.id).checked=false);refresh()};
+
+/* places */
+const types=[...new Set(PLACES.map(p=>p.type))];
+$('#filter').innerHTML+=types.map(t=>`<option>${t}</option>`).join('');
+function renderPlaces(){
+  const f=$('#filter').value;
+  $('#places').innerHTML=PLACES.filter(p=>f==='all'||p.type===f).map(p=>
+    `<li><b>${p.name}</b>${p.verified?'':'<span class="tag">unverified</span>'}<br>${p.address}<br><span class="small">${p.info}</span><br><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.q||p.address+' Samarkand')}" target="_blank" rel="noopener" style="color:var(--water);font-weight:600">Open in Maps</a></li>`).join('');
+}
+$('#filter').onchange=renderPlaces;
+
+/* cleanups + share */
+let cl=store.get('clean',[]);
+const cTot=()=>cl.reduce((a,e)=>({kg:a.kg+e.kg,h:a.h+e.p*e.h}),{kg:0,h:0});
+function renderClean(){
+  const t=cTot();$('#cKg').textContent=t.kg.toFixed(1);$('#cHrs').textContent=Math.round(t.h);
+  $('#cLog').innerHTML=cl.slice(-5).reverse().map(e=>`<li>${e.kg} kg by ${e.p} people, ${e.h} h each</li>`).join('');
+}
+$('#addClean').onclick=()=>{
+  const kg=parseFloat($('#ckg').value),p=parseInt($('#cppl').value)||1,h=parseFloat($('#chrs').value)||0;
+  if(!(kg>0)){$('#ckg').focus();return}
+  cl.push({kg,p,h});store.set('clean',cl);['#ckg','#cppl','#chrs'].forEach(i=>$(i).value='');refresh();
+};
+$('#share').onclick=async()=>{
+  const t=totals(),c=cTot();
+  const txt=`My Sprout Samarkand garden: ${t.kg.toFixed(1)} kg recycled, ${t.co2.toFixed(1)} kg CO2 avoided, ${litres()} L water saved, ${c.kg.toFixed(1)} kg litter cleaned up. Grow yours! #GreenShiftHacks`;
+  try{await navigator.clipboard.writeText(txt);$('#share').textContent='Copied! Paste it in Telegram'}
+  catch(e){prompt('Copy your garden:',txt)}
+  setTimeout(()=>$('#share').textContent='Copy my garden to share',2500);
+};
+
+function refresh(){
+  renderClean();
+  renderWaste();
+  const l=litres();$('#litres').textContent=l;$('#buckets').textContent=Math.round(l/10);
+  growPlant(totals().co2*4+l/10+cTot().kg*1.5);   /* growth = CO2 x4 + litres/10 + litter kg x1.5 */
+}
+refresh();renderPlaces();
+</script>
+</body>
+</html>
